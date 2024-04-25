@@ -256,7 +256,7 @@ class MPPIControllerForPathTracking():
         # calculate rho
         rho = S.min()
         # calculate eta
-        eta = jnp.cumsum(jnp.exp( (-1.0/self.param_lambda) * (S-rho) ))[-1]
+        eta = jnp.sum(jnp.exp( (-1.0/self.param_lambda) * (S-rho) ))
     
         # compute information theoretic weights for each sample
         w = self.compute_weights_batch(S,rho,eta)
@@ -282,21 +282,22 @@ class MPPIControllerForPathTracking():
 
         def lax_traj(carry,idx):
             x,optimal_traj = carry
-            # x = self._F(x, self._g(u[idx]))
-            x = self.rk4(x, self._g(u[idx]))
+            u_star = self._g(u[idx])
+            x = self.rk4(x, u_star)
             optimal_traj = optimal_traj.at[idx].set(x)
-            return (x,optimal_traj),(0)
+            return (x,optimal_traj),(u_star)
 
         carry_init = (x_init,optimal_traj_init)
         carry_final,result = jax.lax.scan(lax_traj,carry_init,jnp.arange(self.T))
         x,optimal_traj = carry_final
+        u_star = result
         
         # update privious control input sequence (shift 1 step to the left)
-        u_prev = u_prev.at[:-1].set(u[1:])
-        u_prev = u_prev.at[-1].set(u[-1])
+        u_prev = u_prev.at[:-1].set(u_star[1:])
+        u_prev = u_prev.at[-1].set(u_star[-1])
         # jax.debug.print("{x}", x=self.u_prev[0])
         # print(u_prev[0])
 
         # return optimal control input and input sequence
-        return u[0], u, optimal_traj, sampled_traj_list, u_prev
+        return u_star[0], u_star, optimal_traj, sampled_traj_list, u_prev
 

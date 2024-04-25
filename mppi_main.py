@@ -76,12 +76,8 @@ def run_simulation_mppi_pathtracking() -> None:
 
         optimal_traj_new = optimal_traj[:, 0:2]
         sampled_traj_list_new = sampled_traj_list[:, :, 0:2]
-    
-        # limit control inputs
-        omega = jnp.clip(optimal_input[0],-max_omega,max_omega)
-        v = jnp.clip(optimal_input[1],-max_vel,max_vel)
 
-        current_state = mppi.rk4(current_state,jnp.array([omega,v]))
+        current_state = mppi.rk4(current_state,optimal_input)
 
         plotter.step(np.asarray(current_state),np.asarray(sampled_traj_list_new),np.asarray(optimal_traj_new))
 
