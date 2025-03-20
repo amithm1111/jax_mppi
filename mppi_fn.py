@@ -292,7 +292,7 @@ class MPPIControllerForPathTracking():
         x,optimal_traj = carry_final
         u_star = result
         
-        # update privious control input sequence (shift 1 step to the left)
+        # update previous control input sequence (shift 1 step to the left)
         u_prev = u_prev.at[:-1].set(u_star[1:])
         u_prev = u_prev.at[-1].set(u_star[-1])
         # jax.debug.print("{x}", x=self.u_prev[0])
